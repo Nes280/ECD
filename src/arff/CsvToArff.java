@@ -15,7 +15,12 @@ public class CsvToArff {
     };
 
     public String header() {
-        return "@relation donnees\n@attribut text STRING\n@attribut class {-1,1}\n@data";
+        return "@RELATION donnees\n@ATTRIBUTE text STRING\n@ATTRIBUTE eval {-1,1}\n@data";
+    }
+
+    public String echappementQuotes( String ligne ) {
+        return ligne.replace( "\"", "\\\"" );// .replace( "'", "\\'" );
+
     }
 
     public String lecture() {
@@ -37,7 +42,7 @@ public class CsvToArff {
             String ligneLabel;
 
             while ( ( ligneData = brData.readLine() ) != null && ( ligneLabel = brLabel.readLine() ) != null ) {
-                resultat += "\n\"" + ligneData.replace( "\"", "\\\"" ) + "\"," + ligneLabel;
+                resultat += "\n\"" + echappementQuotes( ligneData ) + "\"," + ligneLabel;
 
             }
             brData.close();

@@ -7,11 +7,25 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.Hashtable;
+import java.util.Scanner;
 
 public class CsvToArff {
-    public String DATAPATH = "./elements_projet/";
+    public String    DATAPATH    = "./elements_projet/";
+    public String[]  ponctuation = { ",", ".", "!" };   // , "!", "?"
+    public Hashtable smiley;
 
     public CsvToArff() {
+        smiley = new Hashtable();
+        smiley.put( ":)", "happy" );
+        smiley.put( ":-)", "happy" );
+        smiley.put( ":(", "sad" );
+        smiley.put( ":-(", "sad" );
+        smiley.put( ":D", "cheerful" );
+        smiley.put( ":-D", "cheerful" );
+        smiley.put( ":o)", "happy" );
+        smiley.put( ";)", "happy" );
+        smiley.put( ";-)", "happy" );
     };
 
     public String header() {
@@ -23,7 +37,14 @@ public class CsvToArff {
 
     }
 
-    public String lecture() {
+    public String traitementPonctuation( String ligne ) {
+        for ( int i = 0; i < ponctuation.length; i++ ) {
+            ligne = ligne.replace( ponctuation[i], " " );
+        }
+        return ligne.replaceAll( "[ ]+", " " );
+    }
+
+    public String lecture( String rep ) {
         String data = this.DATAPATH + "dataset.csv";
         String label = this.DATAPATH + "labels.csv";
         String resultat = this.header();
@@ -40,10 +61,17 @@ public class CsvToArff {
 
             String ligneData;
             String ligneLabel;
+            if ( rep.equals( "p" ) ) {
+                while ( ( ligneData = brData.readLine() ) != null && ( ligneLabel = brLabel.readLine() ) != null ) {
+                    resultat += "\n\"" + echappementQuotes( traitementPonctuation( ligneData ) ) + "\"," + ligneLabel;
 
-            while ( ( ligneData = brData.readLine() ) != null && ( ligneLabel = brLabel.readLine() ) != null ) {
-                resultat += "\n\"" + echappementQuotes( ligneData ) + "\"," + ligneLabel;
+                }
+            }
+            if ( rep.equals( "b" ) ) {
+                while ( ( ligneData = brData.readLine() ) != null && ( ligneLabel = brLabel.readLine() ) != null ) {
+                    resultat += "\n\"" + echappementQuotes( ligneData ) + "\"," + ligneLabel;
 
+                }
             }
             brData.close();
             brLabel.close();
@@ -66,10 +94,19 @@ public class CsvToArff {
     }
 
     public static void main( String[] args ) {
-
+        Scanner option = new Scanner( System.in );
+        System.out.println( "merci d'entrer l'option du fichier arff:\nb = text brut\np = sans ponctuation" );
+        String rep = option.nextLine();
         CsvToArff a = new CsvToArff();
-        String contenuArff = a.lecture();
-        a.ecriture( contenuArff, "result.arff" );
+        String contenuArff = a.lecture( rep );
+        String nomFichier = "";
+        if ( rep.equals( "b" ) )
+            nomFichier = "Brut.arff";
+        if ( rep.equals( "p" ) )
+            nomFichier = "Ponctuation.arff";
+
+        a.ecriture( contenuArff, nomFichier );
+
         System.out.println( "ok" );
 
     }

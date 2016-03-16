@@ -7,37 +7,71 @@ import java.io.FileWriter;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.Scanner;
 
 public class CsvToArff {
     public String                    DATAPATH    = "./elements_projet/";
-    public String[]                  ponctuation = { ",", ".", "!" };   // ,
-                                                                        // "!",
-                                                                        // "?"
-    public Hashtable<String, String> smileyTwo;
-    public Hashtable<String, String> smileyThree;
-    public Hashtable<String, String> smileyTwoChar;
+    public String                    STOP_LIST   = "./stop_list/";
+    public String[]                  ponctuation = { ",", ".", "!", "[", "]", "-", "?", "_", "/", "*", "@", "(", ")",
+            ":", "&" };                                                                                              // ,
+    // "!",
+    // "?"
+    public Hashtable<String, String> smileySansLettre;
+    public Hashtable<String, String> smileyAvecLettre;
+    public ArrayList<String>         listStop;
 
     public CsvToArff() {
-        smileyTwo = new Hashtable();
-        smileyThree = new Hashtable();
-        smileyTwoChar = new Hashtable();
-        smileyTwo.put( ":)", "happy" );
-        smileyThree.put( ":-)", "happy" );
-        smileyThree.put( "q:)", "happy" );
-        smileyTwo.put( ":(", "sad" );
-        smileyThree.put( ":-(", "sad" );
-        smileyTwoChar.put( ":D", "cheerful" );
-        smileyThree.put( ":-D", "cheerful" );
-        smileyThree.put( ":o)", "happy" );
-        smileyTwo.put( ";)", "happy" );
-        smileyThree.put( ";-)", "happy" );
+        listStop = new ArrayList<String>();
+
+        smileySansLettre = new Hashtable();
+        smileyAvecLettre = new Hashtable();
+        smileySansLettre.put( ":)", "happy" );
+        smileySansLettre.put( ":-)", "happy" );
+        smileySansLettre.put( "q:)", "happy" );
+        smileySansLettre.put( ":(", "sad" );
+        smileySansLettre.put( ":-(", "sad" );
+        smileyAvecLettre.put( ":D ", "cheerful" );
+        smileyAvecLettre.put( ":-D", "cheerful" );
+        smileySansLettre.put( ":o)", "happy" );
+        smileySansLettre.put( ";)", "happy" );
+        smileySansLettre.put( ";-)", "happy" );
     };
 
     public String header() {
         return "@RELATION donnees\n@ATTRIBUTE text STRING\n@ATTRIBUTE eval {-1,1}\n@data";
+    }
+
+    public void stopList() {
+        String label = this.STOP_LIST + "list_stop_words_to_use.txt";
+
+        String resultat = this.header();
+        try {
+            // Ouverture de label
+            InputStream ipsLabel = new FileInputStream( label );
+            InputStreamReader ipsrLabel = new InputStreamReader( ipsLabel );
+            BufferedReader brLabel = new BufferedReader( ipsrLabel );
+
+            String ligneLabel;
+            while ( ( ligneLabel = brLabel.readLine() ) != null ) {
+                // resultat += "\n\"" + echappementQuotes(
+                // traitementPonctuation( ligneData ) ) + "\"," + ligneLabel;
+                listStop.add( ligneLabel );
+
+            }
+        } catch ( Exception e ) {
+            System.out.println( e.toString() );
+        }
+
+    }
+
+    public String traitementStopList( String ligne ) {
+        for ( int i = 0; i < listStop.size(); i++ ) {
+            ligne = ligne.toLowerCase().replaceAll( "[ ]+" + listStop.get( i ) + "[ ]+", " " );
+        }
+        return ligne.replaceAll( "[ ]+", " " );
     }
 
     public String echappementQuotes( String ligne ) {
@@ -54,13 +88,11 @@ public class CsvToArff {
 
     public String traitementSmiley( String ligne ) {
 
-        /*
-         * for ( Map.Entry<String, String> entry : smileyTwo.entrySet() ) {
-         * ligne = ligne.replace( entry.getKey(), " " + entry.getValue() + " "
-         * ); }
-         */
+        for ( Map.Entry<String, String> entry : smileyAvecLettre.entrySet() ) {
+            ligne = ligne.replace( entry.getKey(), " " + entry.getValue() + " " );
+        }
 
-        for ( Map.Entry<String, String> entry : smileyThree.entrySet() ) {
+        for ( Map.Entry<String, String> entry : smileySansLettre.entrySet() ) {
             ligne = ligne.replace( entry.getKey(), " " + entry.getValue() + " " );
         }
 
@@ -103,6 +135,15 @@ public class CsvToArff {
 
                 }
             }
+            if ( rep.equals( "t" ) ) {
+                this.stopList();// on crée le tableau de stopWord
+                while ( ( ligneData = brData.readLine() ) != null && ( ligneLabel = brLabel.readLine() ) != null ) {
+                    resultat += "\n\"" + echappementQuotes(
+                            traitementStopList( traitementPonctuation( traitementSmiley( ligneData ) ) ) )
+                            + "\"," + ligneLabel;
+
+                }
+            }
 
             brData.close();
             brLabel.close();
@@ -127,21 +168,30 @@ public class CsvToArff {
     public static void main( String[] args ) {
         Scanner option = new Scanner( System.in );
         System.out.println(
-                "merci d'entrer l'option du fichier arff:\nb = text brut\np = sans ponctuation\ns = sans smiley et sans ponctuation." );
+                "merci d'entrer l'option du fichier arff:\nb = text brut\np = sans ponctuation\ns = sans smiley et sans ponctuation\nt = sans smiley et sans ponctuation et sans stop words." );
         String rep = option.nextLine();
         CsvToArff a = new CsvToArff();
+
+        Wait w = new Wait();
+        w.start();
+
         String contenuArff = a.lecture( rep );
+        option.close();
+
         String nomFichier = "";
         if ( rep.equals( "b" ) )
-            nomFichier = "Brut.arff";
+            nomFichier = "Bruts.arff";
         if ( rep.equals( "p" ) )
-            nomFichier = "Ponctuation.arff";
+            nomFichier = "Ponctuations.arff";
         if ( rep.equals( "s" ) )
             nomFichier = "PonctuationSmiley.arff";
+        if ( rep.equals( "t" ) )
+            nomFichier = "Traitees.arff";
 
         a.ecriture( contenuArff, nomFichier );
 
-        System.out.println( "ok" );
+        w.stop();
+        System.out.println( "\nDone" );
 
     }
 

@@ -15,7 +15,7 @@ public class LemmatiseurHandler {
     private ArrayList<String>         termesLem;
     private ArrayList<String>         termesPos;
 
-    public LemmatiseurHandler( String ch ) {
+    public LemmatiseurHandler() {
         termes = new ArrayList();
         termesLem = new ArrayList();
         termesPos = new ArrayList();
@@ -24,12 +24,12 @@ public class LemmatiseurHandler {
         System.setProperty( "treetagger.home", "TreeTagger" );
 
         try {
-            tt.setModel( "lib/french-utf8.par" );
+            tt.setModel( "lib/english-utf8.par" );
             tt.setHandler( new TokenHandler<String>() {
 
                 @Override
                 public void token( String token, String pos, String lemma ) {
-                    // System.out.println(token + "\t" + pos + "\t" + lemma);
+                    System.out.println(token + "\t" + pos + "\t" + lemma);
                     termesLem.add( lemma );
                     termesPos.add( pos );
                 }

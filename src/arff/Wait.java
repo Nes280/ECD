@@ -2,7 +2,7 @@ package arff;
 
 public class Wait extends Thread {
 
-    final public static int TIME = 500;
+    final public static int TIME = 100;
 
     public void run() {
         System.out.print( "Processing" );

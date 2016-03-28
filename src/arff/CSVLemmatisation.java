@@ -30,9 +30,15 @@ public class CSVLemmatisation {
 	// filtre servant à retirer les lemmes "parasites"
 	public ArrayList<String> filtre;
 
+	// filtre servant à garder les catégories qui nous intéressent pour
+	// l'analyse morpho-syntaxique
+	public ArrayList<String> filtreCategorie;
+
 	public static String DIRECTORY_ARFF = "./fichiers_arff/";
-	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION = "LemmatiseesSmileyPoncutuation.arff";
-	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS = "LemmatiseesSmileyPoncutuationStopwords.arff";
+	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION = "LemmatiseesSmileyPonctuation.arff";
+	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS = "LemmatiseesSmileyPonctuationStopwords.arff";
+	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_AMS = "LemmatiseesSmileyPonctuationAMS.arff";
+	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS_AMS = "LemmatiseesSmileyPonctuationStopwordsAMS.arff";
 
 	public CSVLemmatisation() {
 		this.filtre = new ArrayList<String>();
@@ -42,6 +48,33 @@ public class CSVLemmatisation {
 		this.filtre.add("<unknown>");
 		this.filtre.add("'");
 		this.filtre.add("\"");
+
+		this.filtreCategorie = new ArrayList<String>();
+		// ajout des catégories pour l'analyse morpho-syntaxique (ici Adjectifs,
+		// Adverbes et verbes)
+		// source :
+		// http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/data/Penn-Treebank-Tagset.pdf
+
+		// catégorie adjectif
+		this.filtreCategorie.add("JJ");
+		this.filtreCategorie.add("JJR");
+		this.filtreCategorie.add("JJS");
+
+		// catégorie adverbes
+		this.filtreCategorie.add("RB");
+		this.filtreCategorie.add("RBR");
+		this.filtreCategorie.add("RBS");
+		this.filtreCategorie.add("RP");
+		this.filtreCategorie.add("WRB");
+
+		// catégorie verbes
+		this.filtreCategorie.add("VB");
+		this.filtreCategorie.add("VBD");
+		this.filtreCategorie.add("VBG");
+		this.filtreCategorie.add("VBN");
+		this.filtreCategorie.add("VBP");
+		this.filtreCategorie.add("VBZ");
+
 	}
 
 	/**
@@ -108,9 +141,11 @@ public class CSVLemmatisation {
 	 * 
 	 * @param f
 	 *            : fichier lemmatisé
+	 * @param analyseMorphoSyntax
+	 *            : option analyse morpho-syntaxique
 	 * @return chaine lemmatisée
 	 */
-	public String lemmatisationChaine(File f) {
+	public String lemmatisationChaine(File f, String analyseMorphoSyntax) {
 
 		String chaineLemmatisee = null;
 		try {
@@ -133,9 +168,16 @@ public class CSVLemmatisation {
 				termeLemmatise = dataSplit[i].split("\t")[2];
 
 				if (!this.filtre.contains(termeLemmatise)) {
-					chaineLemmatisee = chaineLemmatisee + " " + termeLemmatise;
-				}
 
+					if (analyseMorphoSyntax.equals("o")) {
+						String categorie = dataSplit[i].split("\t")[1];
+						if (this.filtreCategorie.contains(categorie)) {
+							chaineLemmatisee = chaineLemmatisee + " " + termeLemmatise;
+						}
+					} else {
+						chaineLemmatisee = chaineLemmatisee + " " + termeLemmatise;
+					}
+				}
 			}
 
 		} catch (IOException e) {
@@ -151,10 +193,15 @@ public class CSVLemmatisation {
 	 * Permet de créer le contenu du fichier ARFF à partir des différents
 	 * fichiers représentants les données traitées par lémmatisation
 	 * 
+	 * @param traitement
+	 *            : type du traitement
+	 * @param analyseMorphoSyntax
+	 *            : option analyse morpho-syntaxique
+	 * 
 	 * @return
 	 * @throws IOException
 	 */
-	public String creationContenuArffLemmatisation(String traitement) throws IOException {
+	public String creationContenuArffLemmatisation(String traitement, String analyseMorphoSyntax) throws IOException {
 		CsvToArff csvToArff = new CsvToArff();
 
 		String contentFileArff = csvToArff.header();
@@ -176,7 +223,7 @@ public class CSVLemmatisation {
 
 		String chaineLemmatisé = "";
 		for (int i = 0; i < filesLemmatisees.length; i++) {
-			chaineLemmatisé = this.lemmatisationChaine(filesLemmatisees[i]);
+			chaineLemmatisé = this.lemmatisationChaine(filesLemmatisees[i], analyseMorphoSyntax);
 
 			// System.out.println("\n\" "+filesLemmatisees[i].getName()+ " " +
 			// chaineLemmatisé + "\"," + labelsArray[i]);
@@ -191,19 +238,39 @@ public class CSVLemmatisation {
 	 * Permet la création du fichier ARFF contenant les données lemmatisées à
 	 * partir du contenu généré par la méthode
 	 * creationContenuArffLemmatisation()
+	 * 
+	 * @param traitement
+	 *            : type du traitement
+	 * @param analyseMorphoSyntax
+	 *            : option analyse morpho-syntaxique
 	 */
-	public void creationFichierArffLemmatisation(String traitement) {
+	public void creationFichierArffLemmatisation(String traitement, String analyseMorphoSyntax) {
 		try {
 			FileWriter fw = null;
 			if (traitement.equals("1")) {
-				fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION);
+				if (analyseMorphoSyntax.equals("o"))
+				{
+					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_AMS);
+				}
+				else
+				{
+					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION);
+				}
+				
 			} else {
-				fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS);
+				if (analyseMorphoSyntax.equals("o"))
+				{
+					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS_AMS);
+				}
+				else
+				{
+					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS);
+				}
 			}
 
 			BufferedWriter bw = new BufferedWriter(fw);
 			PrintWriter fichierSortie = new PrintWriter(bw);
-			String contenu = this.creationContenuArffLemmatisation(traitement);
+			String contenu = this.creationContenuArffLemmatisation(traitement, analyseMorphoSyntax);
 			fichierSortie.print(contenu);
 			fichierSortie.close();
 		} catch (Exception e) {
@@ -253,19 +320,22 @@ public class CSVLemmatisation {
 
 		String rep = sc.nextLine();
 
-		System.out.println("Début du traitement");
-
 		System.out.println(
 				"Choix du traitement sur les données:\n - 1 = Ponctuation + Smileys \n - 2 = Ponctuation + Smileys + StopWords");
 
 		String traitementChoisi = sc.nextLine();
+
+		System.out.println("Début du traitement");
 
 		if (rep.equals("c")) {
 			String contenu = csvLemmatisation.lectureEtTraitement(traitementChoisi);
 			csvLemmatisation.ecriture(contenu, traitementChoisi);
 		} else if (rep.equals("a")) {
 
-			csvLemmatisation.creationFichierArffLemmatisation(traitementChoisi);
+			System.out.println("Analyse morpho-syntaxique (o/n) ?");
+
+			String analyseMorphoSyntax = sc.nextLine();
+			csvLemmatisation.creationFichierArffLemmatisation(traitementChoisi, analyseMorphoSyntax);
 
 		} else {
 			System.out.println("Erreur saisie");
@@ -273,6 +343,7 @@ public class CSVLemmatisation {
 
 		System.out.println("Fin du traitement");
 
+		sc.close();
 	}
 
 }

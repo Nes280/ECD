@@ -75,6 +75,10 @@ public class CSVLemmatisation {
 		this.filtreCategorie.add("VBP");
 		this.filtreCategorie.add("VBZ");
 
+		// catégorie noms
+		// this.filtreCategorie.add("NN");
+		// this.filtreCategorie.add("NNS");
+
 	}
 
 	/**
@@ -153,27 +157,28 @@ public class CSVLemmatisation {
 
 			String[] dataSplit = content.split("\n");
 
-			String termeLemmatise = dataSplit[0].split("\t")[2];
+			chaineLemmatisee = "";
 
-			if (!this.filtre.contains(termeLemmatise)) {
-				chaineLemmatisee = termeLemmatise;
-			} else {
-				chaineLemmatisee = "";
-			}
+			String termeLemmatise = "";
+			String categorie = "";
+			boolean termeValide = false;
 
-			for (int i = 1; i < dataSplit.length; i++) {
-				// System.out.println(dataSplit[i] + " - "
-				// +dataSplit[i].split("\t").length);
+			for (int i = 0; i < dataSplit.length; i++) {
 
 				termeLemmatise = dataSplit[i].split("\t")[2];
 
-				if (!this.filtre.contains(termeLemmatise)) {
+				termeValide = false;
 
-					if (analyseMorphoSyntax.equals("o")) {
-						String categorie = dataSplit[i].split("\t")[1];
-						if (this.filtreCategorie.contains(categorie)) {
-							chaineLemmatisee = chaineLemmatisee + " " + termeLemmatise;
-						}
+				if (analyseMorphoSyntax.equals("o")) {
+					categorie = dataSplit[i].split("\t")[1];
+					termeValide = (!this.filtre.contains(termeLemmatise)) && (this.filtreCategorie.contains(categorie));
+				} else {
+					termeValide = !this.filtre.contains(termeLemmatise);
+				}
+
+				if (termeValide) {
+					if (chaineLemmatisee.isEmpty()) {
+						chaineLemmatisee = termeLemmatise;
 					} else {
 						chaineLemmatisee = chaineLemmatisee + " " + termeLemmatise;
 					}
@@ -186,7 +191,11 @@ public class CSVLemmatisation {
 			return null;
 		}
 
-		return chaineLemmatisee;
+		// CsvToArff csvToArff = new CsvToArff();
+		// csvToArff.stopList();
+
+		// retour de la chaine lemmatisée avec traitement du cas " n't "
+		return chaineLemmatisee.replace("n't", "not");
 	}
 
 	/**
@@ -248,22 +257,16 @@ public class CSVLemmatisation {
 		try {
 			FileWriter fw = null;
 			if (traitement.equals("1")) {
-				if (analyseMorphoSyntax.equals("o"))
-				{
+				if (analyseMorphoSyntax.equals("o")) {
 					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_AMS);
-				}
-				else
-				{
+				} else {
 					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION);
 				}
-				
+
 			} else {
-				if (analyseMorphoSyntax.equals("o"))
-				{
+				if (analyseMorphoSyntax.equals("o")) {
 					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS_AMS);
-				}
-				else
-				{
+				} else {
 					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS);
 				}
 			}

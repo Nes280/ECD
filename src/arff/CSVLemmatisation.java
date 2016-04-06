@@ -30,15 +30,14 @@ public class CSVLemmatisation {
 	// filtre servant à retirer les lemmes "parasites"
 	public ArrayList<String> filtre;
 
-	// filtre servant à garder les catégories qui nous intéressent pour
-	// l'analyse morpho-syntaxique
+	// filtre servant à garder les catégories qui nous intéressent
 	public ArrayList<String> filtreCategorie;
 
 	public static String DIRECTORY_ARFF = "./fichiers_arff/";
 	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION = "LemmatiseesSmileyPonctuation.arff";
 	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS = "LemmatiseesSmileyPonctuationStopwords.arff";
-	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_AMS = "LemmatiseesSmileyPonctuationAMS.arff";
-	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS_AMS = "LemmatiseesSmileyPonctuationStopwordsAMS.arff";
+	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_FC = "LemmatiseesSmileyPonctuationFC.arff";
+	public static String FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS_FC = "LemmatiseesSmileyPonctuationStopwordsFC.arff";
 
 	public CSVLemmatisation() {
 		this.filtre = new ArrayList<String>();
@@ -50,10 +49,8 @@ public class CSVLemmatisation {
 		this.filtre.add("\"");
 
 		this.filtreCategorie = new ArrayList<String>();
-		// ajout des catégories pour l'analyse morpho-syntaxique (ici Adjectifs,
-		// Adverbes et verbes)
-		// source :
-		// http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/data/Penn-Treebank-Tagset.pdf
+		// ajout des catégories (ici Adjectifs, Adverbes et Verbes)
+		// source : http://www.cis.uni-muenchen.de/~schmid/tools/TreeTagger/data/Penn-Treebank-Tagset.pdf
 
 		// catégorie adjectif
 		this.filtreCategorie.add("JJ");
@@ -145,11 +142,11 @@ public class CSVLemmatisation {
 	 * 
 	 * @param f
 	 *            : fichier lemmatisé
-	 * @param analyseMorphoSyntax
-	 *            : option analyse morpho-syntaxique
+	 * @param filtrageCategories
+	 *            : option pour filtrer les catégories
 	 * @return chaine lemmatisée
 	 */
-	public String lemmatisationChaine(File f, String analyseMorphoSyntax) {
+	public String lemmatisationChaine(File f, String filtrageCategories) {
 
 		String chaineLemmatisee = null;
 		try {
@@ -169,7 +166,7 @@ public class CSVLemmatisation {
 
 				termeValide = false;
 
-				if (analyseMorphoSyntax.equals("o")) {
+				if (filtrageCategories.equals("o")) {
 					categorie = dataSplit[i].split("\t")[1];
 					termeValide = (!this.filtre.contains(termeLemmatise)) && (this.filtreCategorie.contains(categorie));
 				} else {
@@ -204,13 +201,13 @@ public class CSVLemmatisation {
 	 * 
 	 * @param traitement
 	 *            : type du traitement
-	 * @param analyseMorphoSyntax
-	 *            : option analyse morpho-syntaxique
+	 * @param filtrageCategorie
+	 *            : option pour filtrer les catégories
 	 * 
 	 * @return
 	 * @throws IOException
 	 */
-	public String creationContenuArffLemmatisation(String traitement, String analyseMorphoSyntax) throws IOException {
+	public String creationContenuArffLemmatisation(String traitement, String filtrageCategorie) throws IOException {
 		CsvToArff csvToArff = new CsvToArff();
 
 		String contentFileArff = csvToArff.header();
@@ -232,10 +229,7 @@ public class CSVLemmatisation {
 
 		String chaineLemmatisé = "";
 		for (int i = 0; i < filesLemmatisees.length; i++) {
-			chaineLemmatisé = this.lemmatisationChaine(filesLemmatisees[i], analyseMorphoSyntax);
-
-			// System.out.println("\n\" "+filesLemmatisees[i].getName()+ " " +
-			// chaineLemmatisé + "\"," + labelsArray[i]);
+			chaineLemmatisé = this.lemmatisationChaine(filesLemmatisees[i], filtrageCategorie);
 
 			contentFileArff += "\n\"" + chaineLemmatisé + "\"," + labelsArray[i];
 		}
@@ -250,22 +244,22 @@ public class CSVLemmatisation {
 	 * 
 	 * @param traitement
 	 *            : type du traitement
-	 * @param analyseMorphoSyntax
-	 *            : option analyse morpho-syntaxique
+	 * @param filtrageCategorie
+	 *            : option pour filtrer les catégories
 	 */
-	public void creationFichierArffLemmatisation(String traitement, String analyseMorphoSyntax) {
+	public void creationFichierArffLemmatisation(String traitement, String filtrageCategorie) {
 		try {
 			FileWriter fw = null;
 			if (traitement.equals("1")) {
-				if (analyseMorphoSyntax.equals("o")) {
-					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_AMS);
+				if (filtrageCategorie.equals("o")) {
+					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_FC);
 				} else {
 					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION);
 				}
 
 			} else {
-				if (analyseMorphoSyntax.equals("o")) {
-					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS_AMS);
+				if (filtrageCategorie.equals("o")) {
+					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS_FC);
 				} else {
 					fw = new FileWriter(DIRECTORY_ARFF + FILE_ARFF_LEMMATISEES_SMILEYS_PONCTUATION_STOPWORDS);
 				}
@@ -273,7 +267,7 @@ public class CSVLemmatisation {
 
 			BufferedWriter bw = new BufferedWriter(fw);
 			PrintWriter fichierSortie = new PrintWriter(bw);
-			String contenu = this.creationContenuArffLemmatisation(traitement, analyseMorphoSyntax);
+			String contenu = this.creationContenuArffLemmatisation(traitement, filtrageCategorie);
 			fichierSortie.print(contenu);
 			fichierSortie.close();
 		} catch (Exception e) {
@@ -335,10 +329,10 @@ public class CSVLemmatisation {
 			csvLemmatisation.ecriture(contenu, traitementChoisi);
 		} else if (rep.equals("a")) {
 
-			System.out.println("Analyse morpho-syntaxique (o/n) ?");
+			System.out.println("Filtrer les catégories (o/n) ?");
 
-			String analyseMorphoSyntax = sc.nextLine();
-			csvLemmatisation.creationFichierArffLemmatisation(traitementChoisi, analyseMorphoSyntax);
+			String filtrageCategories = sc.nextLine();
+			csvLemmatisation.creationFichierArffLemmatisation(traitementChoisi, filtrageCategories);
 
 		} else {
 			System.out.println("Erreur saisie");
